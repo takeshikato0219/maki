@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>まきちゃんの冒険 - ビジュアル迷路RPG</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ffeef8, #f0e6ff);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        .game-container {
+            background: url('https://thumbs.dreamstime.com/b/brick-wall-seamless-texture-ancient-castle-stone-background-marble-pillars-vector-medieval-masonry-old-dungeon-rock-tiles-vintage-223995430.jpg');
+            background-size: 200px 200px;
+            border: 8px solid #8B4513;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        
+        .status-panel {
+            background: rgba(139, 69, 19, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .action-button {
+            background: linear-gradient(145deg, #ff9a9e, #fecfef);
+            border: 3px solid #ff6b9d;
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(255, 107, 157, 0.4);
+            background: linear-gradient(145deg, #fecfef, #ff9a9e);
+        }
+        
+        #gameCanvas {
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            background: url('https://thumbs.dreamstime.com/b/stone-pavement-tiles-texture-cartoon-floor-seamless-pattern-rock-sidewalk-paver-loopable-background-game-ancient-cracked-walkway-220168830.jpg');
+            background-size: 64px 64px;
+        }
+        
+        .minimap {
+            border: 3px solid #8B4513;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.8);
+        }
+        
+        .inventory-item {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #8B4513;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        .inventory-item:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .health-bar {
+            background: linear-gradient(to right, #ff4757, #ff6b9d);
+            border-radius: 10px;
+            height: 20px;
+            transition: width 0.5s ease;
+        }
+        
+        .mana-bar {
+            background: linear-gradient(to right, #3742fa, #70a1ff);
+            border-radius: 10px;
+            height: 20px;
+            transition: width 0.5s ease;
+        }
+        
+        .exp-bar {
+            background: linear-gradient(to right, #2ed573, #7bed9f);
+            border-radius: 10px;
+            height: 15px;
+            transition: width 0.5s ease;
+        }
+        
+        .message-log {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .character-sprite {
+            width: 32px;
+            height: 32px;
+            background: url('https://img.craftpix.net/2023/03/Free-Fantasy-Chibi-Female-Sprites-Pixel-Art5.jpg');
+            background-size: 256px 256px;
+            background-position: 0 0;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .bounce { animation: bounce 0.5s ease-in-out; }
+        
+        @keyframes sparkle {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5) rotate(360deg); opacity: 0; }
+        }
+        
+        .sparkle { animation: sparkle 1s ease-out forwards; }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-bold text-center mb-6 text-pink-600 drop-shadow-lg">
+            <i class="fas fa-crown text-yellow-400"></i> まきちゃんの冒険 - ビジュアル迷路RPG <i class="fas fa-crown text-yellow-400"></i>
+        </h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- ゲーム画面 -->
+            <div class="lg:col-span-3">
+                <div class="game-container p-4">
+                    <canvas id="gameCanvas" width="800" height="600" class="w-full"></canvas>
+                </div>
+                
+                <!-- 操作方法 -->
+                <div class="mt-4 p-4 bg-white bg-opacity-90 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fas fa-gamepad"></i> 操作方法</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-700">
+                        <div><kbd class="px-2 py-1 bg-gray-200 rounded">↑↓←→</kbd> 移動</div>
+                        <div><kbd class="px-2 py-1 bg-gray-200 rounded">Space</kbd> アクション</div>
+                        <div><kbd class="px-2 py-1 bg-gray-200 rounded">E</kbd> アイテム拾得</div>
+                        <div><kbd class="px-2 py-1 bg-gray-200 rounded">I</kbd> インベントリ</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- サイドパネル -->
+            <div class="lg:col-span-1">
+                <!-- ステータス -->
+                <div class="status-panel p-4 mb-4">
+                    <h3 class="text-xl font-bold mb-3"><i class="fas fa-user"></i> まきちゃん</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>HP</span>
+                                <span id="hpText">100/100</span>
+                            </div>
+                            <div class="bg-gray-700 rounded-full h-5">
+                                <div id="hpBar" class="health-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>MP</span>
+                                <span id="mpText">50/50</span>
+                            </div>
+                            <div class="bg-gray-700 rounded-full h-5">
+                                <div id="mpBar" class="mana-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>経験値</span>
+                                <span id="expText">0/100</span>
+                            </div>
+                            <div class="bg-gray-700 rounded-full h-4">
+                                <div id="expBar" class="exp-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-lg font-bold">レベル <span id="levelText">1</span></span>
+                        </div>
+                        <div class="text-center">
+                            <span class="text-yellow-300">スコア: <span id="scoreText">0</span></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ミニマップ -->
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fas fa-map"></i> ミニマップ</h3>
+                    <canvas id="minimap" width="200" height="150" class="minimap w-full"></canvas>
+                </div>
+                
+                <!-- インベントリ -->
+                <div class="mb-4 p-4 bg-white bg-opacity-90 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2"><i class="fas fa-backpack"></i> インベントリ</h3>
+                    <div id="inventory" class="grid grid-cols-4 gap-2">
+                        <!-- アイテムがここに追加される -->
+                    </div>
+                </div>
+                
+                <!-- メッセージログ -->
+                <div class="message-log p-3 mb-4">
+                    <h3 class="text-sm font-bold mb-2"><i class="fas fa-scroll"></i> ログ</h3>
+                    <div id="messageLog" class="space-y-1">
+                        <div>まきちゃんの冒険が始まりました！</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- まきちゃんアクションボタン -->
+        <div class="mt-6 p-6 bg-white bg-opacity-90 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold text-center mb-4 text-pink-600">
+                <i class="fas fa-heart"></i> まきちゃんアクション <i class="fas fa-heart"></i>
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがいい子になりました！お手伝いもがんばります！')">
+                    <i class="fas fa-angel"></i><br>いい子まきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがちょっといたずらしちゃいました！えへへ〜')">
+                    <i class="fas fa-grin-wink"></i><br>悪い子まきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがお手伝いします！何をしましょうか？')">
+                    <i class="fas fa-hands-helping"></i><br>お手伝いまきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがお片付けしました！きれいになったよ〜！')">
+                    <i class="fas fa-broom"></i><br>お片付けまきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんが動画を見ています！面白い動画がいっぱい！')">
+                    <i class="fas fa-video"></i><br>動画鑑賞まきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがおやつを食べています！とっても美味しいです〜')">
+                    <i class="fas fa-cookie-bite"></i><br>おやつタイムまきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがお昼寝中です...すやすや...zzz')">
+                    <i class="fas fa-bed"></i><br>お昼寝まきちゃん
+                </button>
+                <button class="action-button px-4 py-3 rounded-lg font-bold text-white" onclick="speakAction('まきちゃんがお散歩に出かけました！いい天気ですね〜')">
+                    <i class="fas fa-walking"></i><br>お散歩まきちゃん
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ゲーム状態
+        const gameState = {
+            player: {
+                x: 1,
+                y: 1,
+                hp: 100,
+                maxHp: 100,
+                mp: 50,
+                maxMp: 50,
+                level: 1,
+                exp: 0,
+                maxExp: 100,
+                score: 0,
+                inventory: []
+            },
+            gameStarted: false,
+            maze: [],
+            monsters: [],
+            items: [],
+            mazeSize: 25
+        };
+
+        // キャンバス設定
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const minimap = document.getElementById('minimap');
+        const minimapCtx = minimap.getContext('2d');
+
+        // 画像の読み込み
+        const images = {
+            wall: new Image(),
+            floor: new Image(),
+            character: new Image()
+        };
+
+        images.wall.src = 'https://thumbs.dreamstime.com/b/brick-wall-seamless-texture-ancient-castle-stone-background-marble-pillars-vector-medieval-masonry-old-dungeon-rock-tiles-vintage-223995430.jpg';
+        images.floor.src = 'https://thumbs.dreamstime.com/b/stone-pavement-tiles-texture-cartoon-floor-seamless-pattern-rock-sidewalk-paver-loopable-background-game-ancient-cracked-walkway-220168830.jpg';
+        images.character.src = 'https://img.craftpix.net/2023/03/Free-Fantasy-Chibi-Female-Sprites-Pixel-Art5.jpg';
+
+        // 迷路生成
+        function generateMaze() {
+            const size = gameState.mazeSize;
+            const maze = Array(size).fill().map(() => Array(size).fill(1));
+            
+            function carve(x, y) {
+                maze[y][x] = 0;
+                const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+                directions.sort(() => Math.random() - 0.5);
+                
+                for (const [dx, dy] of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && maze[ny][nx] === 1) {
+                        maze[y + dy/2][x + dx/2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+            
+            carve(1, 1);
+            gameState.maze = maze;
+            
+            // アイテムとモンスターを配置
+            placeItemsAndMonsters();
+        }
+
+        function placeItemsAndMonsters() {
+            gameState.items = [];
+            gameState.monsters = [];
+            
+            for (let i = 0; i < 10; i++) {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * gameState.mazeSize);
+                    y = Math.floor(Math.random() * gameState.mazeSize);
+                } while (gameState.maze[y][x] !== 0 || (x === gameState.player.x && y === gameState.player.y));
+                
+                if (Math.random() < 0.3) {
+                    gameState.monsters.push({x, y, hp: 30, type: 'goblin'});
+                } else {
+                    gameState.items.push({
+                        x, y, 
+                        type: Math.random() < 0.5 ? 'potion' : 'treasure',
+                        name: Math.random() < 0.5 ? '回復ポーション' : '宝石'
+                    });
+                }
+            }
+        }
+
+        // 描画関数
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const cellSize = Math.min(canvas.width / 15, canvas.height / 12);
+            const startX = Math.max(0, gameState.player.x - 7);
+            const startY = Math.max(0, gameState.player.y - 6);
+            const endX = Math.min(gameState.mazeSize, startX + 15);
+            const endY = Math.min(gameState.mazeSize, startY + 12);
+            
+            // 迷路を描画
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const drawX = (x - startX) * cellSize;
+                    const drawY = (y - startY) * cellSize;
+                    
+                    if (gameState.maze[y][x] === 1) {
+                        // 壁
+                        ctx.fillStyle = '#654321';
+                        ctx.fillRect(drawX, drawY, cellSize, cellSize);
+                        if (images.wall.complete) {
+                            ctx.drawImage(images.wall, drawX, drawY, cellSize, cellSize);
+                        }
+                    } else {
+                        // 床
+                        ctx.fillStyle = '#deb887';
+                        ctx.fillRect(drawX, drawY, cellSize, cellSize);
+                        if (images.floor.complete) {
+                            ctx.drawImage(images.floor, drawX, drawY, cellSize, cellSize);
+                        }
+                    }
+                }
+            }
+            
+            // アイテムを描画
+            gameState.items.forEach(item => {
+                if (item.x >= startX && item.x < endX && item.y >= startY && item.y < endY) {
+                    const drawX = (item.x - startX) * cellSize + cellSize/4;
+                    const drawY = (item.y - startY) * cellSize + cellSize/4;
+                    
+                    ctx.fillStyle = item.type === 'potion' ? '#ff69b4' : '#ffd700';
+                    ctx.fillRect(drawX, drawY, cellSize/2, cellSize/2);
+                    ctx.fillStyle = 'white';
+                    ctx.font = `${cellSize/3}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(item.type === 'potion' ? '💊' : '💎', drawX + cellSize/4, drawY + cellSize/3);
+                }
+            });
+            
+            // モンスターを描画
+            gameState.monsters.forEach(monster => {
+                if (monster.x >= startX && monster.x < endX && monster.y >= startY && monster.y < endY) {
+                    const drawX = (monster.x - startX) * cellSize + cellSize/4;
+                    const drawY = (monster.y - startY) * cellSize + cellSize/4;
+                    
+                    ctx.fillStyle = '#8b0000';
+                    ctx.fillRect(drawX, drawY, cellSize/2, cellSize/2);
+                    ctx.fillStyle = 'white';
+                    ctx.font = `${cellSize/2}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('👹', drawX + cellSize/4, drawY + cellSize/2);
+                }
+            });
+            
+            // プレイヤーを描画
+            const playerDrawX = (gameState.player.x - startX) * cellSize + cellSize/4;
+            const playerDrawY = (gameState.player.y - startY) * cellSize + cellSize/4;
+            
+            ctx.fillStyle = '#ffb6c1';
+            ctx.fillRect(playerDrawX, playerDrawY, cellSize/2, cellSize/2);
+            ctx.fillStyle = 'white';
+            ctx.font = `${cellSize/2}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('🌸', playerDrawX + cellSize/4, playerDrawY + cellSize/2);
+        }
+
+        // ミニマップ描画
+        function drawMinimap() {
+            minimapCtx.clearRect(0, 0, minimap.width, minimap.height);
+            
+            const cellSize = Math.min(minimap.width / gameState.mazeSize, minimap.height / gameState.mazeSize);
+            
+            for (let y = 0; y < gameState.mazeSize; y++) {
+                for (let x = 0; x < gameState.mazeSize; x++) {
+                    const drawX = x * cellSize;
+                    const drawY = y * cellSize;
+                    
+                    if (gameState.maze[y][x] === 1) {
+                        minimapCtx.fillStyle = '#333';
+                    } else {
+                        minimapCtx.fillStyle = '#ccc';
+                    }
+                    minimapCtx.fillRect(drawX, drawY, cellSize, cellSize);
+                }
+            }
+            
+            // プレイヤー位置
+            minimapCtx.fillStyle = '#ff69b4';
+            minimapCtx.fillRect(gameState.player.x * cellSize, gameState.player.y * cellSize, cellSize, cellSize);
+        }
+
+        // プレイヤー移動
+        function movePlayer(dx, dy) {
+            const newX = gameState.player.x + dx;
+            const newY = gameState.player.y + dy;
+            
+            if (newX >= 0 && newX < gameState.mazeSize && 
+                newY >= 0 && newY < gameState.mazeSize && 
+                gameState.maze[newY][newX] === 0) {
+                
+                gameState.player.x = newX;
+                gameState.player.y = newY;
+                
+                // アイテム収集チェック
+                const itemIndex = gameState.items.findIndex(item => 
+                    item.x === newX && item.y === newY);
+                if (itemIndex !== -1) {
+                    const item = gameState.items[itemIndex];
+                    gameState.items.splice(itemIndex, 1);
+                    gameState.player.inventory.push(item);
+                    
+                    if (item.type === 'potion') {
+                        gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 20);
+                        addMessage(`${item.name}を見つけて体力が回復しました！`);
+                        speakAction(`${item.name}を見つけました！体力が回復したよ〜`);
+                    } else {
+                        gameState.player.score += 100;
+                        addMessage(`${item.name}を発見！スコアが上がりました！`);
+                        speakAction(`宝物を発見！まきちゃん大喜びです〜`);
+                    }
+                    updateInventory();
+                }
+                
+                // モンスター戦闘チェック
+                const monsterIndex = gameState.monsters.findIndex(monster => 
+                    monster.x === newX && monster.y === newY);
+                if (monsterIndex !== -1) {
+                    const monster = gameState.monsters[monsterIndex];
+                    const damage = Math.floor(Math.random() * 15) + 5;
+                    gameState.player.hp = Math.max(0, gameState.player.hp - damage);
+                    gameState.monsters.splice(monsterIndex, 1);
+                    
+                    gameState.player.exp += 25;
+                    gameState.player.score += 50;
+                    
+                    addMessage(`モンスターとの戦闘！${damage}のダメージを受けました`);
+                    speakAction('モンスターが現れました！まきちゃんがんばって！');
+                    
+                    if (gameState.player.exp >= gameState.player.maxExp) {
+                        levelUp();
+                    }
+                }
+                
+                updateUI();
+                drawGame();
+                drawMinimap();
+            }
+        }
+
+        // レベルアップ
+        function levelUp() {
+            gameState.player.level++;
+            gameState.player.exp -= gameState.player.maxExp;
+            gameState.player.maxExp = Math.floor(gameState.player.maxExp * 1.5);
+            gameState.player.maxHp += 10;
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.player.maxMp += 5;
+            gameState.player.mp = gameState.player.maxMp;
+            
+            addMessage(`レベルアップ！レベル${gameState.player.level}になりました！`);
+            speakAction(`レベルアップ！まきちゃんが強くなりました〜`);
+        }
+
+        // UI更新
+        function updateUI() {
+            document.getElementById('hpText').textContent = `${gameState.player.hp}/${gameState.player.maxHp}`;
+            document.getElementById('hpBar').style.width = `${(gameState.player.hp / gameState.player.maxHp) * 100}%`;
+            
+            document.getElementById('mpText').textContent = `${gameState.player.mp}/${gameState.player.maxMp}`;
+            document.getElementById('mpBar').style.width = `${(gameState.player.mp / gameState.player.maxMp) * 100}%`;
+            
+            document.getElementById('expText').textContent = `${gameState.player.exp}/${gameState.player.maxExp}`;
+            document.getElementById('expBar').style.width = `${(gameState.player.exp / gameState.player.maxExp) * 100}%`;
+            
+            document.getElementById('levelText').textContent = gameState.player.level;
+            document.getElementById('scoreText').textContent = gameState.player.score;
+        }
+
+        // インベントリ更新
+        function updateInventory() {
+            const inventory = document.getElementById('inventory');
+            inventory.innerHTML = '';
+            
+            for (let i = 0; i < 12; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'inventory-item h-10 flex items-center justify-center cursor-pointer';
+                
+                if (i < gameState.player.inventory.length) {
+                    const item = gameState.player.inventory[i];
+                    slot.textContent = item.type === 'potion' ? '💊' : '💎';
+                    slot.title = item.name;
+                } else {
+                    slot.style.opacity = '0.3';
+                }
+                
+                inventory.appendChild(slot);
+            }
+        }
+
+        // メッセージ追加
+        function addMessage(message) {
+            const messageLog = document.getElementById('messageLog');
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.className = 'text-xs text-green-300';
+            messageLog.appendChild(messageDiv);
+            
+            // 最大10個のメッセージを保持
+            while (messageLog.children.length > 10) {
+                messageLog.removeChild(messageLog.firstChild);
+            }
+            
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+
+        // 音声読み上げ
+        function speakAction(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.9;
+                utterance.pitch = 1.2;
+                speechSynthesis.speak(utterance);
+            }
+            addMessage(text);
+        }
+
+        // キーボード操作
+        document.addEventListener('keydown', (e) => {
+            if (!gameState.gameStarted) return;
+            
+            switch(e.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    e.preventDefault();
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    e.preventDefault();
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    e.preventDefault();
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    e.preventDefault();
+                    movePlayer(1, 0);
+                    break;
+                case 'Space':
+                    e.preventDefault();
+                    speakAction('まきちゃんが周りを調べました！');
+                    break;
+                case 'KeyI':
+                    e.preventDefault();
+                    speakAction('インベントリを確認しました');
+                    break;
+            }
+        });
+
+        // ゲーム初期化
+        function initGame() {
+            generateMaze();
+            gameState.player.x = 1;
+            gameState.player.y = 1;
+            gameState.gameStarted = true;
+            
+            updateUI();
+            updateInventory();
+            drawGame();
+            drawMinimap();
+            
+            addMessage('まきちゃんの冒険が始まりました！');
+            speakAction('まきちゃんの迷路冒険が始まりました！矢印キーで移動して宝物を探しましょう！');
+        }
+
+        // ゲーム開始
+        window.addEventListener('load', () => {
+            // 画像が読み込まれるまで少し待つ
+            setTimeout(() => {
+                initGame();
+            }, 1000);
+        });
+
+        // セーブ機能
+        function saveGame() {
+            localStorage.setItem('makiChanRPG', JSON.stringify(gameState));
+            addMessage('ゲームをセーブしました！');
+        }
+
+        // ロード機能
+        function loadGame() {
+            const saved = localStorage.getItem('makiChanRPG');
+            if (saved) {
+                Object.assign(gameState, JSON.parse(saved));
+                updateUI();
+                updateInventory();
+                drawGame();
+                drawMinimap();
+                addMessage('ゲームをロードしました！');
+            }
+        }
+
+        // 定期的な自動保存
+        setInterval(saveGame, 30000);
+    </script>
+</body>
+</html>

@@ -2,667 +2,516 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>まきちゃんの冒険 - 全デバイス対応版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>まきちゃんの冒険 - 超簡単版</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #ffb6c1, #ffd1dc, #ffe4e1);
-            min-height: 100vh;
-            overflow-x: hidden;
-            touch-action: manipulation;
+            background: linear-gradient(135deg, #ffb3d9, #ffe6f2);
+            font-family: 'Comic Sans MS', cursive;
         }
-
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-        }
-
-        .header {
-            text-align: center;
-            padding: 10px;
-            background: rgba(255, 182, 193, 0.8);
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .header h1 {
-            color: #ff69b4;
-            font-size: 1.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .game-area {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .maze-container {
-            background: #fff;
-            border-radius: 10px;
-            padding: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            margin-bottom: 10px;
-        }
-
-        .maze {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            gap: 1px;
-            background: #333;
-            border-radius: 5px;
-            padding: 5px;
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .cell {
-            aspect-ratio: 1;
+        .maze-cell {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #333;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8em;
-            border-radius: 2px;
-            transition: all 0.2s ease;
+            font-size: 40px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
-
-        .wall { background: #8b4513; }
-        .floor { background: #90ee90; }
-        .player { background: #ff69b4; }
-        .treasure { background: #ffd700; }
-        .monster { background: #ff4500; }
-        .goal { background: #00ff00; }
-
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 10px 0;
+        .path {
+            background-color: #fff8dc;
         }
-
-        .movement-controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            max-width: 200px;
+        .wall {
+            background-color: #8b4513;
         }
-
-        .control-btn {
-            background: #ff69b4;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
+        .player {
+            background-color: #ffb6c1;
+            box-shadow: 0 0 20px #ff69b4;
         }
-
-        .control-btn:hover {
-            background: #ff1493;
+        .goal {
+            background-color: #ffd700;
+            box-shadow: 0 0 20px #ffa500;
+        }
+        .hint-path {
+            background-color: #98fb98;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .btn-big {
+            font-size: 20px;
+            padding: 15px 30px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+        .btn-big:hover {
             transform: scale(1.05);
         }
-
-        .control-btn:active {
-            transform: scale(0.95);
-            background: #dc143c;
+        .celebration {
+            animation: bounce 0.5s ease-in-out;
         }
-
-        .direction-btn {
-            min-height: 50px;
-            font-size: 18px;
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-        }
-
-        .maki-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .maki-btn {
-            background: linear-gradient(45deg, #ff69b4, #ff1493);
-            color: white;
-            border: none;
-            border-radius: 15px;
-            padding: 15px 10px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            touch-action: manipulation;
-            text-align: center;
-        }
-
-        .maki-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-        }
-
-        .maki-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .stats {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            text-align: center;
-        }
-
-        .stat-item {
-            background: linear-gradient(45deg, #ffd1dc, #ffb6c1);
-            border-radius: 8px;
-            padding: 10px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .message {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            text-align: center;
-            font-weight: bold;
-            color: #333;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .instructions {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            font-size: 14px;
-            line-height: 1.5;
-            color: #333;
-        }
-
-        /* レスポンシブデザイン */
-        @media (max-width: 768px) {
-            .header h1 { font-size: 1.2em; }
-            .control-btn { padding: 12px; font-size: 14px; }
-            .maki-btn { padding: 12px 8px; font-size: 12px; }
-            .direction-btn { min-height: 45px; font-size: 16px; }
-        }
-
-        @media (max-width: 480px) {
-            .maki-actions { grid-template-columns: 1fr; }
-            .controls { grid-template-columns: 1fr; }
-            .movement-controls { justify-self: center; }
-        }
-
-        /* 古いブラウザ対応 */
-        .legacy-support {
-            display: none;
-        }
-
-        @media screen and (max-device-width: 320px) {
-            .cell { font-size: 0.6em; }
-            .control-btn { padding: 10px; font-size: 12px; }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🌸 まきちゃんの冒険 🌸</h1>
-            <p>全デバイス対応 迷路RPG</p>
+<body class="min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- タイトル -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-pink-600 mb-2">🌸 まきちゃんの冒険 - 超簡単版 🌸</h1>
+            <p class="text-xl text-purple-600">誰でも確実にクリアできる優しい迷路だよ！</p>
         </div>
 
-        <div class="stats">
-            <div class="stat-item">HP: <span id="hp">100</span></div>
-            <div class="stat-item">レベル: <span id="level">1</span></div>
-            <div class="stat-item">スコア: <span id="score">0</span></div>
-            <div class="stat-item">アイテム: <span id="items">0</span></div>
-        </div>
-
-        <div class="maze-container">
-            <div id="maze" class="maze"></div>
-        </div>
-
-        <div class="controls">
-            <div class="movement-controls">
-                <div></div>
-                <button class="control-btn direction-btn" onclick="move('up')" id="up-btn">↑</button>
-                <div></div>
-                <button class="control-btn direction-btn" onclick="move('left')" id="left-btn">←</button>
-                <button class="control-btn direction-btn" onclick="action()" id="action-btn">🎯</button>
-                <button class="control-btn direction-btn" onclick="move('right')" id="right-btn">→</button>
-                <div></div>
-                <button class="control-btn direction-btn" onclick="move('down')" id="down-btn">↓</button>
-                <div></div>
-            </div>
-            <div class="action-buttons">
-                <button class="control-btn" onclick="newMaze()">新しい迷路</button>
-                <button class="control-btn" onclick="resetGame()">リセット</button>
+        <!-- ゲーム情報 -->
+        <div class="bg-white bg-opacity-80 rounded-lg p-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="bg-pink-100 rounded-lg p-3">
+                    <p class="text-sm text-gray-600">レベル</p>
+                    <p class="text-2xl font-bold text-pink-600" id="level">1</p>
+                </div>
+                <div class="bg-blue-100 rounded-lg p-3">
+                    <p class="text-sm text-gray-600">歩数</p>
+                    <p class="text-2xl font-bold text-blue-600" id="steps">0</p>
+                </div>
+                <div class="bg-green-100 rounded-lg p-3">
+                    <p class="text-sm text-gray-600">ゴールまで</p>
+                    <p class="text-2xl font-bold text-green-600" id="distance">2歩</p>
+                </div>
+                <div class="bg-yellow-100 rounded-lg p-3">
+                    <p class="text-sm text-gray-600">状態</p>
+                    <p class="text-lg font-bold text-yellow-600" id="status">がんばって！</p>
+                </div>
             </div>
         </div>
 
-        <div class="message" id="message">
-            まきちゃんと一緒に迷路を探検しよう！🌸
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- 迷路エリア -->
+            <div class="bg-white bg-opacity-90 rounded-lg p-6">
+                <h2 class="text-2xl font-bold text-center mb-4 text-purple-600">🗺️ 迷路</h2>
+                <div class="flex justify-center mb-4">
+                    <div id="maze" class="grid grid-cols-3 gap-1">
+                        <!-- 迷路はJavaScriptで生成 -->
+                    </div>
+                </div>
+                
+                <!-- 移動ボタン -->
+                <div class="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+                    <div></div>
+                    <button id="btn-up" class="btn-big bg-blue-500 hover:bg-blue-600 text-white">↑</button>
+                    <div></div>
+                    <button id="btn-left" class="btn-big bg-blue-500 hover:bg-blue-600 text-white">←</button>
+                    <div class="flex items-center justify-center">
+                        <span class="text-2xl">🌸</span>
+                    </div>
+                    <button id="btn-right" class="btn-big bg-blue-500 hover:bg-blue-600 text-white">→</button>
+                    <div></div>
+                    <button id="btn-down" class="btn-big bg-blue-500 hover:bg-blue-600 text-white">↓</button>
+                    <div></div>
+                </div>
+            </div>
+
+            <!-- コントロールパネル -->
+            <div class="space-y-4">
+                <!-- ヘルプボタン -->
+                <div class="bg-white bg-opacity-90 rounded-lg p-4">
+                    <h3 class="text-xl font-bold mb-3 text-purple-600">🆘 困ったときは</h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button id="btn-hint" class="btn-big bg-green-500 hover:bg-green-600 text-white">💡 次はどこ？</button>
+                        <button id="btn-auto" class="btn-big bg-orange-500 hover:bg-orange-600 text-white">🚗 自動でゴール</button>
+                        <button id="btn-reset" class="btn-big bg-gray-500 hover:bg-gray-600 text-white">🔄 リセット</button>
+                    </div>
+                </div>
+
+                <!-- メッセージエリア -->
+                <div class="bg-white bg-opacity-90 rounded-lg p-4">
+                    <h3 class="text-xl font-bold mb-3 text-purple-600">💬 メッセージ</h3>
+                    <div id="message" class="text-lg p-3 bg-yellow-100 rounded-lg text-center font-bold">
+                        まきちゃんを👑ゴールまで案内してね！
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="maki-actions">
-            <button class="maki-btn" onclick="makiAction('good')">いい子<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('bad')">悪い子<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('help')">お手伝い<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('clean')">お片付け<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('video')">動画鑑賞<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('snack')">おやつタイム<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('sleep')">お昼寝<br>まきちゃん</button>
-            <button class="maki-btn" onclick="makiAction('walk')">お散歩<br>まきちゃん</button>
+        <!-- まきちゃんアクションボタン -->
+        <div class="bg-white bg-opacity-90 rounded-lg p-6 mt-6">
+            <h2 class="text-2xl font-bold text-center mb-4 text-purple-600">🌸 まきちゃんアクション 🌸</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button class="action-btn btn-big bg-pink-400 hover:bg-pink-500 text-white" data-action="いい子まきちゃん">😇 いい子</button>
+                <button class="action-btn btn-big bg-red-400 hover:bg-red-500 text-white" data-action="悪い子まきちゃん">😈 悪い子</button>
+                <button class="action-btn btn-big bg-blue-400 hover:bg-blue-500 text-white" data-action="お手伝いまきちゃん">🧹 お手伝い</button>
+                <button class="action-btn btn-big bg-green-400 hover:bg-green-500 text-white" data-action="お片付けまきちゃん">📦 お片付け</button>
+                <button class="action-btn btn-big bg-purple-400 hover:bg-purple-500 text-white" data-action="動画鑑賞まきちゃん">📺 動画鑑賞</button>
+                <button class="action-btn btn-big bg-yellow-400 hover:bg-yellow-500 text-white" data-action="おやつタイムまきちゃん">🍪 おやつ</button>
+                <button class="action-btn btn-big bg-indigo-400 hover:bg-indigo-500 text-white" data-action="お昼寝まきちゃん">😴 お昼寝</button>
+                <button class="action-btn btn-big bg-teal-400 hover:bg-teal-500 text-white" data-action="お散歩まきちゃん">🚶‍♀️ お散歩</button>
+            </div>
         </div>
 
-        <div class="instructions">
-            <strong>操作方法：</strong><br>
-            🖱️ PC: 矢印ボタンクリック、キーボード矢印キー・WASD<br>
-            📱 スマホ: 画面のボタンをタッチ<br>
-            🎯 ゴール: 緑の■を目指そう！<br>
-            💎 宝箱: 黄色の■でアイテムゲット<br>
-            👹 モンスター: 赤い■は要注意！
+        <!-- 操作説明 -->
+        <div class="bg-white bg-opacity-90 rounded-lg p-4 mt-6">
+            <h3 class="text-xl font-bold mb-3 text-purple-600">📖 操作方法</h3>
+            <div class="text-lg space-y-2">
+                <p>✨ <strong>移動：</strong>青い矢印ボタンをクリック</p>
+                <p>✨ <strong>ヒント：</strong>「次はどこ？」ボタンで方向を教えてもらう</p>
+                <p>✨ <strong>自動：</strong>「自動でゴール」ボタンで自動的にクリア</p>
+                <p>✨ <strong>音声：</strong>音量を上げて音声ガイドを楽しもう</p>
+            </div>
         </div>
     </div>
 
     <script>
         // ゲーム状態
-        var gameState = {
-            player: { x: 1, y: 1 },
-            hp: 100,
+        let gameState = {
             level: 1,
-            score: 0,
-            items: 0,
-            maze: [],
-            mazeSize: 10
+            playerX: 0,
+            playerY: 0,
+            goalX: 2,
+            goalY: 2,
+            steps: 0,
+            mazeSize: 3,
+            completed: false
         };
 
-        // デバイス検出
-        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        var isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        // 超簡単な迷路パターン（レベル別）
+        const mazePatterns = {
+            1: [
+                [1, 1, 0],
+                [0, 1, 0],
+                [0, 1, 1]
+            ],
+            2: [
+                [1, 1, 1],
+                [0, 0, 1],
+                [0, 0, 1]
+            ],
+            3: [
+                [1, 0, 1, 0],
+                [1, 1, 1, 0],
+                [0, 0, 1, 0],
+                [0, 0, 1, 1]
+            ]
+        };
 
-        // 音声合成（対応デバイスのみ）
+        // 音声合成の初期化
+        let synth = window.speechSynthesis;
+
         function speak(text) {
-            try {
-                if ('speechSynthesis' in window) {
-                    var utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'ja-JP';
-                    utterance.rate = 1;
-                    utterance.pitch = 1.2;
-                    speechSynthesis.speak(utterance);
-                }
-            } catch (e) {
-                console.log('音声合成に対応していません');
+            if (synth) {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.8;
+                utterance.pitch = 1.2;
+                synth.speak(utterance);
             }
         }
 
-        // メッセージ表示
-        function showMessage(text) {
-            document.getElementById('message').textContent = text;
-            speak(text);
-        }
-
-        // 迷路生成
-        function generateMaze() {
-            var maze = [];
-            var size = gameState.mazeSize;
+        // 迷路を描画
+        function renderMaze() {
+            const mazeElement = document.getElementById('maze');
+            const pattern = mazePatterns[gameState.level] || mazePatterns[1];
+            const size = pattern.length;
             
-            // 初期化（全て壁）
-            for (var i = 0; i < size; i++) {
-                maze[i] = [];
-                for (var j = 0; j < size; j++) {
-                    maze[i][j] = 'wall';
-                }
-            }
-
-            // シンプルな迷路パターン
-            for (var i = 1; i < size - 1; i += 2) {
-                for (var j = 1; j < size - 1; j += 2) {
-                    maze[i][j] = 'floor';
-                    
-                    // ランダムに道を作る
-                    if (Math.random() > 0.5 && j + 2 < size - 1) {
-                        maze[i][j + 1] = 'floor';
-                    }
-                    if (Math.random() > 0.5 && i + 2 < size - 1) {
-                        maze[i + 1][j] = 'floor';
-                    }
-                }
-            }
-
-            // スタート地点
-            maze[1][1] = 'floor';
-            
-            // ゴール
-            maze[size - 2][size - 2] = 'goal';
-            
-            // アイテムとモンスターを配置
-            var itemCount = 0;
-            var monsterCount = 0;
-            
-            for (var i = 2; i < size - 2; i++) {
-                for (var j = 2; j < size - 2; j++) {
-                    if (maze[i][j] === 'floor') {
-                        var rand = Math.random();
-                        if (rand < 0.1 && itemCount < 5) {
-                            maze[i][j] = 'treasure';
-                            itemCount++;
-                        } else if (rand < 0.15 && monsterCount < 3) {
-                            maze[i][j] = 'monster';
-                            monsterCount++;
-                        }
-                    }
-                }
-            }
-
-            return maze;
-        }
-
-        // 迷路描画
-        function drawMaze() {
-            var mazeElement = document.getElementById('maze');
             mazeElement.innerHTML = '';
+            mazeElement.className = `grid grid-cols-${size} gap-1`;
             
-            for (var i = 0; i < gameState.mazeSize; i++) {
-                for (var j = 0; j < gameState.mazeSize; j++) {
-                    var cell = document.createElement('div');
-                    cell.className = 'cell';
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'maze-cell';
                     
-                    if (i === gameState.player.y && j === gameState.player.x) {
-                        cell.className += ' player';
-                        cell.textContent = '🌸';
+                    if (pattern[y][x] === 0) {
+                        cell.className += ' wall';
+                        cell.textContent = '🧱';
                     } else {
-                        var cellType = gameState.maze[i][j];
-                        cell.className += ' ' + cellType;
+                        cell.className += ' path';
                         
-                        switch (cellType) {
-                            case 'wall': cell.textContent = '■'; break;
-                            case 'floor': cell.textContent = '　'; break;
-                            case 'treasure': cell.textContent = '💎'; break;
-                            case 'monster': cell.textContent = '👹'; break;
-                            case 'goal': cell.textContent = '🏆'; break;
+                        if (x === gameState.playerX && y === gameState.playerY) {
+                            cell.className += ' player';
+                            cell.textContent = '🌸';
+                        } else if (x === gameState.goalX && y === gameState.goalY) {
+                            cell.className += ' goal';
+                            cell.textContent = '👑';
                         }
                     }
-                    
-                    mazeElement.appendChild(cell);
                 }
             }
         }
 
-        // ステータス更新
-        function updateStats() {
-            document.getElementById('hp').textContent = gameState.hp;
-            document.getElementById('level').textContent = gameState.level;
-            document.getElementById('score').textContent = gameState.score;
-            document.getElementById('items').textContent = gameState.items;
-        }
-
-        // 移動処理
-        function move(direction) {
-            var newX = gameState.player.x;
-            var newY = gameState.player.y;
-            
-            switch (direction) {
-                case 'up': newY--; break;
-                case 'down': newY++; break;
-                case 'left': newX--; break;
-                case 'right': newX++; break;
-            }
+        // プレイヤーの移動
+        function movePlayer(dx, dy) {
+            const newX = gameState.playerX + dx;
+            const newY = gameState.playerY + dy;
+            const pattern = mazePatterns[gameState.level] || mazePatterns[1];
             
             // 境界チェック
-            if (newX < 0 || newX >= gameState.mazeSize || 
-                newY < 0 || newY >= gameState.mazeSize) {
-                showMessage('そっちには進めません！');
+            if (newX < 0 || newX >= pattern[0].length || newY < 0 || newY >= pattern.length) {
+                showMessage('そっちには行けないよ！', 'error');
+                speak('そっちには行けません');
                 return;
             }
             
             // 壁チェック
-            if (gameState.maze[newY][newX] === 'wall') {
-                showMessage('壁にぶつかりました！');
+            if (pattern[newY][newX] === 0) {
+                showMessage('壁があるよ！別の道を探してみて！', 'error');
+                speak('壁があります。別の道を探してください');
                 return;
             }
             
             // 移動実行
-            gameState.player.x = newX;
-            gameState.player.y = newY;
+            gameState.playerX = newX;
+            gameState.playerY = newY;
+            gameState.steps++;
             
-            // イベント処理
-            var cellType = gameState.maze[newY][newX];
-            switch (cellType) {
-                case 'treasure':
-                    showMessage('宝箱を発見しました！アイテムをゲット！');
-                    gameState.items++;
-                    gameState.score += 100;
-                    gameState.maze[newY][newX] = 'floor';
-                    break;
-                    
-                case 'monster':
-                    showMessage('モンスターとの戦闘！');
-                    var damage = Math.floor(Math.random() * 20) + 10;
-                    gameState.hp -= damage;
-                    gameState.score += 50;
-                    gameState.maze[newY][newX] = 'floor';
-                    
-                    if (gameState.hp <= 0) {
-                        showMessage('ゲームオーバー！');
-                        resetGame();
-                        return;
-                    }
-                    break;
-                    
-                case 'goal':
-                    showMessage('ゴール到達！おめでとうございます！');
-                    gameState.score += 500;
-                    gameState.level++;
-                    newMaze();
-                    return;
-                    
-                default:
-                    showMessage('まきちゃんが移動しました');
-                    break;
+            updateGameInfo();
+            renderMaze();
+            
+            // ゴール判定
+            if (newX === gameState.goalX && newY === gameState.goalY) {
+                gameCompleted();
+            } else {
+                const distance = Math.abs(newX - gameState.goalX) + Math.abs(newY - gameState.goalY);
+                showMessage(`いいね！ゴールまであと${distance}歩だよ！`, 'success');
+                speak(`いいですね！ゴールまであと${distance}歩です`);
             }
-            
-            drawMaze();
-            updateStats();
         }
 
-        // アクション
-        function action() {
-            showMessage('まきちゃんが周りを調べています...');
+        // ゲーム情報の更新
+        function updateGameInfo() {
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('steps').textContent = gameState.steps;
+            const distance = Math.abs(gameState.playerX - gameState.goalX) + Math.abs(gameState.playerY - gameState.goalY);
+            document.getElementById('distance').textContent = distance + '歩';
             
-            // 周りのアイテムをチェック
-            var found = false;
-            for (var dy = -1; dy <= 1; dy++) {
-                for (var dx = -1; dx <= 1; dx++) {
-                    var checkX = gameState.player.x + dx;
-                    var checkY = gameState.player.y + dy;
-                    
-                    if (checkX >= 0 && checkX < gameState.mazeSize && 
-                        checkY >= 0 && checkY < gameState.mazeSize) {
-                        if (gameState.maze[checkY][checkX] === 'treasure') {
-                            showMessage('近くに宝箱があります！');
-                            found = true;
-                        } else if (gameState.maze[checkY][checkX] === 'goal') {
-                            showMessage('ゴールが近くにあります！');
-                            found = true;
-                        }
+            if (distance === 0) {
+                document.getElementById('status').textContent = 'クリア！';
+            } else if (distance === 1) {
+                document.getElementById('status').textContent = 'もう少し！';
+            } else {
+                document.getElementById('status').textContent = 'がんばって！';
+            }
+        }
+
+        // メッセージ表示
+        function showMessage(text, type = 'info') {
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = text;
+            messageElement.className = `text-lg p-3 rounded-lg text-center font-bold ${
+                type === 'success' ? 'bg-green-100 text-green-800' :
+                type === 'error' ? 'bg-red-100 text-red-800' :
+                'bg-yellow-100 text-yellow-800'
+            }`;
+            
+            if (type === 'success') {
+                messageElement.classList.add('celebration');
+                setTimeout(() => messageElement.classList.remove('celebration'), 1000);
+            }
+        }
+
+        // ゲームクリア
+        function gameCompleted() {
+            gameState.completed = true;
+            showMessage('🎉 やったね！まきちゃんがゴールに到着したよ！🎉', 'success');
+            speak('やったー！まきちゃんがゴールに到着しました！おめでとうございます！');
+            
+            // 花火エフェクト（簡易版）
+            document.body.style.background = 'linear-gradient(135deg, #ff6b9d, #feca57, #48dbfb, #ff9ff3)';
+            setTimeout(() => {
+                document.body.style.background = 'linear-gradient(135deg, #ffb3d9, #ffe6f2)';
+            }, 3000);
+            
+            // 次のレベルへの案内
+            setTimeout(() => {
+                if (gameState.level < 3) {
+                    if (confirm('次のレベルに挑戦する？')) {
+                        nextLevel();
                     }
+                } else {
+                    showMessage('全レベルクリア！まきちゃんアクションを楽しんでね！', 'success');
+                }
+            }, 2000);
+        }
+
+        // 次のレベル
+        function nextLevel() {
+            gameState.level++;
+            gameState.playerX = 0;
+            gameState.playerY = 0;
+            gameState.steps = 0;
+            gameState.completed = false;
+            
+            const pattern = mazePatterns[gameState.level];
+            if (pattern) {
+                gameState.goalX = pattern[0].length - 1;
+                gameState.goalY = pattern.length - 1;
+                updateGameInfo();
+                renderMaze();
+                showMessage(`レベル${gameState.level}に挑戦！`, 'info');
+                speak(`レベル${gameState.level}に挑戦しましょう`);
+            }
+        }
+
+        // ヒント機能
+        function showHint() {
+            const dx = gameState.goalX - gameState.playerX;
+            const dy = gameState.goalY - gameState.playerY;
+            
+            let direction = '';
+            let arrow = '';
+            
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) {
+                    direction = '右';
+                    arrow = '→';
+                } else {
+                    direction = '左';
+                    arrow = '←';
+                }
+            } else {
+                if (dy > 0) {
+                    direction = '下';
+                    arrow = '↓';
+                } else {
+                    direction = '上';
+                    arrow = '↑';
                 }
             }
             
-            if (!found) {
-                showMessage('何も見つかりませんでした...');
-            }
+            showMessage(`${arrow} ${direction}に進んでみて！`, 'info');
+            speak(`${direction}に進んでください`);
+            
+            // 道筋をハイライト
+            highlightPath();
         }
 
-        // まきちゃんアクション
-        function makiAction(type) {
-            var messages = {
-                'good': 'まきちゃんがいい子になりました！お利口さんですね〜',
-                'bad': 'まきちゃんがちょっといたずらしちゃいました！でも可愛いから許しちゃう〜',
-                'help': 'まきちゃんがお手伝いしてくれます！とても助かります〜',
-                'clean': 'まきちゃんがお片付けしています！きれい好きですね〜',
-                'video': 'まきちゃんが動画を見ています！楽しそうですね〜',
-                'snack': 'まきちゃんがおやつを食べています！美味しそう〜',
-                'sleep': 'まきちゃんがお昼寝中です...すやすや〜',
-                'walk': 'まきちゃんがお散歩に行きました！元気いっぱいですね〜'
-            };
-            
-            showMessage(messages[type] || 'まきちゃんが何かしています〜');
-            
-            // 小さなボーナス
-            gameState.score += 10;
-            updateStats();
+        // 道筋ハイライト
+        function highlightPath() {
+            const cells = document.querySelectorAll('.maze-cell.path');
+            cells.forEach(cell => {
+                if (!cell.classList.contains('player') && !cell.classList.contains('goal')) {
+                    cell.classList.add('hint-path');
+                    setTimeout(() => cell.classList.remove('hint-path'), 2000);
+                }
+            });
         }
 
-        // 新しい迷路
-        function newMaze() {
-            gameState.maze = generateMaze();
-            gameState.player.x = 1;
-            gameState.player.y = 1;
-            drawMaze();
-            showMessage('新しい迷路が生成されました！');
+        // 自動ゴール
+        function autoGoal() {
+            showMessage('自動でゴールまで案内するね！', 'info');
+            speak('自動でゴールまで案内します');
+            
+            const interval = setInterval(() => {
+                const dx = gameState.goalX - gameState.playerX;
+                const dy = gameState.goalY - gameState.playerY;
+                
+                if (dx === 0 && dy === 0) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    movePlayer(dx > 0 ? 1 : -1, 0);
+                } else {
+                    movePlayer(0, dy > 0 ? 1 : -1);
+                }
+            }, 800);
         }
 
         // ゲームリセット
         function resetGame() {
-            gameState.hp = 100;
-            gameState.level = 1;
-            gameState.score = 0;
-            gameState.items = 0;
-            newMaze();
-            updateStats();
-            showMessage('ゲームをリセットしました！');
+            gameState.playerX = 0;
+            gameState.playerY = 0;
+            gameState.steps = 0;
+            gameState.completed = false;
+            
+            updateGameInfo();
+            renderMaze();
+            showMessage('新しいゲームを始めるよ！', 'info');
+            speak('新しいゲームを始めましょう');
         }
 
-        // キーボード操作（PC用）
-        document.addEventListener('keydown', function(e) {
+        // まきちゃんアクション
+        function makiAction(action) {
+            const messages = {
+                'いい子まきちゃん': 'まきちゃんがとってもいい子になりました！えらいね！',
+                '悪い子まきちゃん': 'まきちゃんがちょっといたずらしちゃった！かわいいね！',
+                'お手伝いまきちゃん': 'まきちゃんがお手伝いをしてくれました！ありがとう！',
+                'お片付けまきちゃん': 'まきちゃんがお片付けをしました！きれいになったね！',
+                '動画鑑賞まきちゃん': 'まきちゃんが楽しそうに動画を見ています！',
+                'おやつタイムまきちゃん': 'まきちゃんが美味しそうにおやつを食べています！',
+                'お昼寝まきちゃん': 'まきちゃんがぐっすりお昼寝しています！かわいい寝顔！',
+                'お散歩まきちゃん': 'まきちゃんが元気にお散歩に出かけました！'
+            };
+            
+            const message = messages[action] || 'まきちゃんが何かをしています！';
+            showMessage(message, 'success');
+            speak(message);
+        }
+
+        // イベントリスナー
+        document.getElementById('btn-up').addEventListener('click', () => movePlayer(0, -1));
+        document.getElementById('btn-down').addEventListener('click', () => movePlayer(0, 1));
+        document.getElementById('btn-left').addEventListener('click', () => movePlayer(-1, 0));
+        document.getElementById('btn-right').addEventListener('click', () => movePlayer(1, 0));
+        
+        document.getElementById('btn-hint').addEventListener('click', showHint);
+        document.getElementById('btn-auto').addEventListener('click', autoGoal);
+        document.getElementById('btn-reset').addEventListener('click', resetGame);
+        
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                makiAction(e.target.dataset.action);
+            });
+        });
+
+        // キーボード操作
+        document.addEventListener('keydown', (e) => {
             switch(e.key) {
                 case 'ArrowUp':
                 case 'w':
                 case 'W':
                     e.preventDefault();
-                    move('up');
+                    movePlayer(0, -1);
                     break;
                 case 'ArrowDown':
                 case 's':
                 case 'S':
                     e.preventDefault();
-                    move('down');
+                    movePlayer(0, 1);
                     break;
                 case 'ArrowLeft':
                 case 'a':
                 case 'A':
                     e.preventDefault();
-                    move('left');
+                    movePlayer(-1, 0);
                     break;
                 case 'ArrowRight':
                 case 'd':
                 case 'D':
                     e.preventDefault();
-                    move('right');
+                    movePlayer(1, 0);
                     break;
                 case ' ':
-                case 'Enter':
                     e.preventDefault();
-                    action();
+                    showHint();
                     break;
             }
         });
 
-        // タッチイベント（モバイル用）
-        if (isTouch) {
-            var touchStartX = 0;
-            var touchStartY = 0;
-            
-            document.addEventListener('touchstart', function(e) {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            
-            document.addEventListener('touchend', function(e) {
-                if (!touchStartX || !touchStartY) return;
-                
-                var touchEndX = e.changedTouches[0].clientX;
-                var touchEndY = e.changedTouches[0].clientY;
-                
-                var diffX = touchStartX - touchEndX;
-                var diffY = touchStartY - touchEndY;
-                
-                if (Math.abs(diffX) > Math.abs(diffY)) {
-                    if (diffX > 50) move('left');
-                    else if (diffX < -50) move('right');
-                } else {
-                    if (diffY > 50) move('up');
-                    else if (diffY < -50) move('down');
-                }
-                
-                touchStartX = 0;
-                touchStartY = 0;
-            }, { passive: true });
-        }
-
         // ゲーム初期化
-        window.onload = function() {
-            try {
-                gameState.maze = generateMaze();
-                drawMaze();
-                updateStats();
-                showMessage('まきちゃんの冒険へようこそ！🌸');
-            } catch (e) {
-                console.log('初期化エラー:', e);
-                document.getElementById('message').textContent = 'ゲームを読み込み中...';
-            }
-        };
-
-        // 画面回転対応
-        window.addEventListener('orientationchange', function() {
-            setTimeout(function() {
-                drawMaze();
-            }, 100);
-        });
-
-        // 古いブラウザ対応
-        if (!Array.prototype.forEach) {
-            Array.prototype.forEach = function(callback) {
-                for (var i = 0; i < this.length; i++) {
-                    callback(this[i], i, this);
-                }
-            };
-        }
+        updateGameInfo();
+        renderMaze();
+        speak('まきちゃんの冒険へようこそ！まきちゃんをゴールまで案内してください');
     </script>
 </body>
 </html>
+
 
 

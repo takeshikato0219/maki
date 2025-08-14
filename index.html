@@ -4,696 +4,665 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
-    <title>まきちゃんの冒険 - スマホ版迷路RPG</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>まきちゃんの冒険 - 全デバイス対応版</title>
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .game-container {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ffb6c1, #ffd1dc, #ffe4e1);
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
         }
 
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
             padding: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            border-bottom: 2px solid #ff69b4;
-            max-height: 120px;
-            overflow-y: auto;
         }
 
-        .action-btn {
-            flex: 1;
-            min-width: 80px;
-            height: 40px;
-            border: none;
-            border-radius: 20px;
-            background: linear-gradient(45deg, #ff69b4, #ff1493);
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        .header {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 182, 193, 0.8);
+            border-radius: 10px;
+            margin-bottom: 10px;
         }
 
-        .action-btn:active {
-            transform: scale(0.95);
-            background: linear-gradient(45deg, #ff1493, #dc143c);
+        .header h1 {
+            color: #ff69b4;
+            font-size: 1.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .game-area {
-            flex: 1;
-            position: relative;
-            background: #2c3e50;
-        }
-
-        #gameCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            background-image: url('https://thumbs.dreamstime.com/b/stone-pavement-tiles-texture-cartoon-floor-seamless-pattern-rock-sidewalk-paver-loopable-background-game-ancient-cracked-walkway-220168830.jpg');
-            background-size: 60px 60px;
-        }
-
-        .status-bar {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 8px;
-            border-radius: 10px;
             display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            z-index: 10;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .virtual-controller {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 120px;
-            pointer-events: none;
-            z-index: 20;
+        .maze-container {
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
         }
 
-        .d-pad {
-            position: absolute;
-            left: 20px;
-            bottom: 20px;
-            width: 100px;
-            height: 100px;
-            pointer-events: all;
-        }
-
-        .d-pad-button {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #333;
+        .maze {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 1px;
+            background: #333;
             border-radius: 5px;
+            padding: 5px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.1s;
+            font-size: 0.8em;
+            border-radius: 2px;
+            transition: all 0.2s ease;
         }
 
-        .d-pad-button:active {
+        .wall { background: #8b4513; }
+        .floor { background: #90ee90; }
+        .player { background: #ff69b4; }
+        .treasure { background: #ffd700; }
+        .monster { background: #ff4500; }
+        .goal { background: #00ff00; }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .movement-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 200px;
+        }
+
+        .control-btn {
             background: #ff69b4;
             color: white;
-            transform: scale(0.9);
-        }
-
-        .d-pad-up { top: 0; left: 35px; }
-        .d-pad-down { bottom: 0; left: 35px; }
-        .d-pad-left { top: 35px; left: 0; }
-        .d-pad-right { top: 35px; right: 0; }
-
-        .action-controls {
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-            pointer-events: all;
-        }
-
-        .control-button {
-            width: 50px;
-            height: 50px;
-            margin: 5px;
             border: none;
-            border-radius: 50%;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .control-btn:hover {
+            background: #ff1493;
+            transform: scale(1.05);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            background: #dc143c;
+        }
+
+        .direction-btn {
+            min-height: 50px;
+            font-size: 18px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+        }
+
+        .maki-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .maki-btn {
+            background: linear-gradient(45deg, #ff69b4, #ff1493);
             color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 10px;
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
-            display: inline-block;
-            text-align: center;
-            line-height: 46px;
-        }
-
-        .control-button:active {
-            transform: scale(0.9);
-            background: linear-gradient(45deg, #45a049, #3d8b40);
-        }
-
-        .control-button.attack { background: linear-gradient(45deg, #f44336, #da190b); }
-        .control-button.item { background: linear-gradient(45deg, #2196F3, #0b7dda); }
-
-        .message-area {
-            position: absolute;
-            bottom: 140px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 10px;
-            min-height: 40px;
-            font-size: 12px;
-            z-index: 15;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .message-area.show {
-            opacity: 1;
-        }
-
-        .character {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: url('https://img.craftpix.net/2023/03/Free-Fantasy-Chibi-Female-Sprites-Pixel-Art5.jpg') no-repeat;
-            background-size: 300px 200px;
-            background-position: 0 0;
             transition: all 0.3s ease;
-            z-index: 5;
-            border-radius: 50%;
-            border: 2px solid #ff69b4;
-            box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            touch-action: manipulation;
+            text-align: center;
         }
 
-        .wall {
-            background-image: url('https://thumbs.dreamstime.com/b/brick-wall-seamless-texture-ancient-castle-stone-background-marble-pillars-vector-medieval-masonry-old-dungeon-rock-tiles-vintage-223995430.jpg');
-            background-size: cover;
-            border: 1px solid #8B4513;
+        .maki-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
         }
 
-        .treasure {
-            background: linear-gradient(45deg, #FFD700, #FFA500);
+        .maki-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .stats {
+            background: rgba(255, 255, 255, 0.9);
             border-radius: 10px;
-            animation: sparkle 1s infinite alternate;
+            padding: 15px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            text-align: center;
         }
 
-        .monster {
-            background: linear-gradient(45deg, #8B0000, #FF0000);
-            border-radius: 50%;
-            animation: pulse 1s infinite;
+        .stat-item {
+            background: linear-gradient(45deg, #ffd1dc, #ffb6c1);
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: bold;
+            color: #333;
         }
 
-        @keyframes sparkle {
-            0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 5px gold; }
-            100% { transform: scale(1.1) rotate(180deg); box-shadow: 0 0 15px gold; }
+        .message {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
+        .instructions {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
         }
 
-        .mini-map {
-            position: absolute;
-            top: 80px;
-            right: 10px;
-            width: 80px;
-            height: 80px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #fff;
-            border-radius: 5px;
-            z-index: 10;
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.2em; }
+            .control-btn { padding: 12px; font-size: 14px; }
+            .maki-btn { padding: 12px 8px; font-size: 12px; }
+            .direction-btn { min-height: 45px; font-size: 16px; }
+        }
+
+        @media (max-width: 480px) {
+            .maki-actions { grid-template-columns: 1fr; }
+            .controls { grid-template-columns: 1fr; }
+            .movement-controls { justify-self: center; }
+        }
+
+        /* 古いブラウザ対応 */
+        .legacy-support {
+            display: none;
+        }
+
+        @media screen and (max-device-width: 320px) {
+            .cell { font-size: 0.6em; }
+            .control-btn { padding: 10px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button class="action-btn" onclick="performAction('good')"><i class="fas fa-heart"></i> いい子</button>
-            <button class="action-btn" onclick="performAction('bad')"><i class="fas fa-grin-wink"></i> 悪い子</button>
-            <button class="action-btn" onclick="performAction('help')"><i class="fas fa-hands-helping"></i> お手伝い</button>
-            <button class="action-btn" onclick="performAction('clean')"><i class="fas fa-broom"></i> お片付け</button>
-            <button class="action-btn" onclick="performAction('video')"><i class="fab fa-youtube"></i> 動画</button>
-            <button class="action-btn" onclick="performAction('snack')"><i class="fas fa-cookie"></i> おやつ</button>
-            <button class="action-btn" onclick="performAction('sleep')"><i class="fas fa-bed"></i> お昼寝</button>
-            <button class="action-btn" onclick="performAction('walk')"><i class="fas fa-walking"></i> お散歩</button>
+    <div class="container">
+        <div class="header">
+            <h1>🌸 まきちゃんの冒険 🌸</h1>
+            <p>全デバイス対応 迷路RPG</p>
         </div>
 
-        <!-- Game Area -->
-        <div class="game-area">
-            <canvas id="gameCanvas"></canvas>
-            
-            <!-- Status Bar -->
-            <div class="status-bar">
-                <div>❤️ HP: <span id="hp">100</span></div>
-                <div>⭐ Lv: <span id="level">1</span></div>
-                <div>💰 Score: <span id="score">0</span></div>
-                <div>🎒 Items: <span id="items">0</span></div>
+        <div class="stats">
+            <div class="stat-item">HP: <span id="hp">100</span></div>
+            <div class="stat-item">レベル: <span id="level">1</span></div>
+            <div class="stat-item">スコア: <span id="score">0</span></div>
+            <div class="stat-item">アイテム: <span id="items">0</span></div>
+        </div>
+
+        <div class="maze-container">
+            <div id="maze" class="maze"></div>
+        </div>
+
+        <div class="controls">
+            <div class="movement-controls">
+                <div></div>
+                <button class="control-btn direction-btn" onclick="move('up')" id="up-btn">↑</button>
+                <div></div>
+                <button class="control-btn direction-btn" onclick="move('left')" id="left-btn">←</button>
+                <button class="control-btn direction-btn" onclick="action()" id="action-btn">🎯</button>
+                <button class="control-btn direction-btn" onclick="move('right')" id="right-btn">→</button>
+                <div></div>
+                <button class="control-btn direction-btn" onclick="move('down')" id="down-btn">↓</button>
+                <div></div>
             </div>
-
-            <!-- Mini Map -->
-            <canvas id="miniMap" class="mini-map"></canvas>
-
-            <!-- Message Area -->
-            <div id="messageArea" class="message-area">
-                矢印キーまたは十字キーでまきちゃんを操作してください！
+            <div class="action-buttons">
+                <button class="control-btn" onclick="newMaze()">新しい迷路</button>
+                <button class="control-btn" onclick="resetGame()">リセット</button>
             </div>
+        </div>
 
-            <!-- Virtual Controller -->
-            <div class="virtual-controller">
-                <!-- D-Pad -->
-                <div class="d-pad">
-                    <div class="d-pad-button d-pad-up" data-direction="up">↑</div>
-                    <div class="d-pad-button d-pad-down" data-direction="down">↓</div>
-                    <div class="d-pad-button d-pad-left" data-direction="left">←</div>
-                    <div class="d-pad-button d-pad-right" data-direction="right">→</div>
-                </div>
+        <div class="message" id="message">
+            まきちゃんと一緒に迷路を探検しよう！🌸
+        </div>
 
-                <!-- Action Controls -->
-                <div class="action-controls">
-                    <button class="control-button attack" onclick="attackAction()">A<br><small>攻撃</small></button>
-                    <button class="control-button item" onclick="useItem()">B<br><small>アイテム</small></button>
-                    <button class="control-button" onclick="toggleMenu()">☰<br><small>メニュー</small></button>
-                </div>
-            </div>
+        <div class="maki-actions">
+            <button class="maki-btn" onclick="makiAction('good')">いい子<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('bad')">悪い子<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('help')">お手伝い<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('clean')">お片付け<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('video')">動画鑑賞<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('snack')">おやつタイム<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('sleep')">お昼寝<br>まきちゃん</button>
+            <button class="maki-btn" onclick="makiAction('walk')">お散歩<br>まきちゃん</button>
+        </div>
+
+        <div class="instructions">
+            <strong>操作方法：</strong><br>
+            🖱️ PC: 矢印ボタンクリック、キーボード矢印キー・WASD<br>
+            📱 スマホ: 画面のボタンをタッチ<br>
+            🎯 ゴール: 緑の■を目指そう！<br>
+            💎 宝箱: 黄色の■でアイテムゲット<br>
+            👹 モンスター: 赤い■は要注意！
         </div>
     </div>
 
     <script>
-        // Game state
-        let gameState = {
-            player: { x: 1, y: 1, hp: 100, level: 1, score: 0, items: 0 },
+        // ゲーム状態
+        var gameState = {
+            player: { x: 1, y: 1 },
+            hp: 100,
+            level: 1,
+            score: 0,
+            items: 0,
             maze: [],
-            mazeSize: 15,
-            cellSize: 30,
-            treasures: [],
-            monsters: [],
-            gameRunning: true,
-            lastMoveTime: 0
+            mazeSize: 10
         };
 
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const miniMapCanvas = document.getElementById('miniMap');
-        const miniCtx = miniMapCanvas.getContext('2d');
+        // デバイス検出
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        var isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-        // Resize canvas
-        function resizeCanvas() {
-            const gameArea = document.querySelector('.game-area');
-            canvas.width = gameArea.clientWidth;
-            canvas.height = gameArea.clientHeight;
-            miniMapCanvas.width = 80;
-            miniMapCanvas.height = 80;
-        }
-
-        // Initialize maze
-        function generateMaze() {
-            const size = gameState.mazeSize;
-            gameState.maze = Array(size).fill().map(() => Array(size).fill(1));
-            
-            // Simple maze generation
-            for (let y = 1; y < size - 1; y += 2) {
-                for (let x = 1; x < size - 1; x += 2) {
-                    gameState.maze[y][x] = 0;
-                    
-                    // Add random paths
-                    if (Math.random() > 0.3) {
-                        if (y > 1 && Math.random() > 0.5) gameState.maze[y-1][x] = 0;
-                        if (x > 1 && Math.random() > 0.5) gameState.maze[y][x-1] = 0;
-                    }
-                }
-            }
-
-            // Add treasures and monsters
-            gameState.treasures = [];
-            gameState.monsters = [];
-            
-            for (let i = 0; i < 8; i++) {
-                let x, y;
-                do {
-                    x = Math.floor(Math.random() * size);
-                    y = Math.floor(Math.random() * size);
-                } while (gameState.maze[y][x] === 1 || (x === 1 && y === 1));
-                
-                if (i < 5) {
-                    gameState.treasures.push({x, y});
-                } else {
-                    gameState.monsters.push({x, y, hp: 30});
-                }
-            }
-        }
-
-        // Render game
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const cellSize = gameState.cellSize;
-            const offsetX = canvas.width / 2 - gameState.player.x * cellSize;
-            const offsetY = canvas.height / 2 - gameState.player.y * cellSize;
-
-            // Draw maze
-            for (let y = 0; y < gameState.mazeSize; y++) {
-                for (let x = 0; x < gameState.mazeSize; x++) {
-                    const screenX = x * cellSize + offsetX;
-                    const screenY = y * cellSize + offsetY;
-                    
-                    if (gameState.maze[y][x] === 1) {
-                        // Wall
-                        ctx.fillStyle = '#8B4513';
-                        ctx.fillRect(screenX, screenY, cellSize, cellSize);
-                        ctx.strokeStyle = '#654321';
-                        ctx.strokeRect(screenX, screenY, cellSize, cellSize);
-                    } else {
-                        // Floor
-                        ctx.fillStyle = '#90EE90';
-                        ctx.fillRect(screenX, screenY, cellSize, cellSize);
-                    }
-                }
-            }
-
-            // Draw treasures
-            gameState.treasures.forEach(treasure => {
-                const screenX = treasure.x * cellSize + offsetX + 5;
-                const screenY = treasure.y * cellSize + offsetY + 5;
-                ctx.fillStyle = '#FFD700';
-                ctx.fillRect(screenX, screenY, cellSize - 10, cellSize - 10);
-                ctx.fillStyle = '#FFA500';
-                ctx.fillRect(screenX + 2, screenY + 2, cellSize - 14, cellSize - 14);
-            });
-
-            // Draw monsters
-            gameState.monsters.forEach(monster => {
-                const screenX = monster.x * cellSize + offsetX + 5;
-                const screenY = monster.y * cellSize + offsetY + 5;
-                ctx.fillStyle = '#FF0000';
-                ctx.beginPath();
-                ctx.arc(screenX + cellSize/2 - 5, screenY + cellSize/2 - 5, cellSize/2 - 5, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            // Draw player
-            const playerScreenX = canvas.width / 2 - cellSize / 2;
-            const playerScreenY = canvas.height / 2 - cellSize / 2;
-            ctx.fillStyle = '#FF69B4';
-            ctx.beginPath();
-            ctx.arc(playerScreenX + cellSize/2, playerScreenY + cellSize/2, cellSize/2 - 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#FFF';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('🌸', playerScreenX + cellSize/2, playerScreenY + cellSize/2 + 5);
-
-            // Draw mini map
-            renderMiniMap();
-        }
-
-        // Render mini map
-        function renderMiniMap() {
-            miniCtx.clearRect(0, 0, 80, 80);
-            
-            const scale = 80 / gameState.mazeSize;
-            
-            for (let y = 0; y < gameState.mazeSize; y++) {
-                for (let x = 0; x < gameState.mazeSize; x++) {
-                    const color = gameState.maze[y][x] === 1 ? '#333' : '#fff';
-                    miniCtx.fillStyle = color;
-                    miniCtx.fillRect(x * scale, y * scale, scale, scale);
-                }
-            }
-            
-            // Player position
-            miniCtx.fillStyle = '#FF69B4';
-            miniCtx.fillRect(gameState.player.x * scale, gameState.player.y * scale, scale, scale);
-        }
-
-        // Move player
-        function movePlayer(dx, dy) {
-            const newX = gameState.player.x + dx;
-            const newY = gameState.player.y + dy;
-            
-            if (newX >= 0 && newX < gameState.mazeSize && 
-                newY >= 0 && newY < gameState.mazeSize && 
-                gameState.maze[newY][newX] === 0) {
-                
-                gameState.player.x = newX;
-                gameState.player.y = newY;
-                
-                // Check for treasures
-                const treasureIndex = gameState.treasures.findIndex(t => t.x === newX && t.y === newY);
-                if (treasureIndex !== -1) {
-                    gameState.treasures.splice(treasureIndex, 1);
-                    gameState.player.score += 100;
-                    gameState.player.items++;
-                    showMessage('宝物を見つけました！ +100ポイント');
-                    speak('宝物を見つけました！');
-                    if (navigator.vibrate) navigator.vibrate(200);
-                }
-                
-                // Check for monsters
-                const monsterIndex = gameState.monsters.findIndex(m => m.x === newX && m.y === newY);
-                if (monsterIndex !== -1) {
-                    const monster = gameState.monsters[monsterIndex];
-                    gameState.player.hp -= 10;
-                    showMessage('モンスターに遭遇！ -10 HP');
-                    speak('モンスターが現れました！');
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                    
-                    if (gameState.player.hp <= 0) {
-                        showMessage('ゲームオーバー！');
-                        speak('ゲームオーバーです');
-                        gameState.gameRunning = false;
-                    }
-                }
-                
-                updateUI();
-                render();
-            }
-        }
-
-        // Touch controls
-        let touchStart = null;
-        let isMoving = false;
-
-        // D-pad controls
-        document.querySelectorAll('.d-pad-button').forEach(button => {
-            button.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const direction = button.dataset.direction;
-                handleMove(direction);
-            });
-        });
-
-        // Swipe controls
-        canvas.addEventListener('touchstart', (e) => {
-            touchStart = {
-                x: e.touches[0].clientX,
-                y: e.touches[0].clientY
-            };
-        });
-
-        canvas.addEventListener('touchend', (e) => {
-            if (!touchStart) return;
-            
-            const touchEnd = {
-                x: e.changedTouches[0].clientX,
-                y: e.changedTouches[0].clientY
-            };
-            
-            const dx = touchEnd.x - touchStart.x;
-            const dy = touchEnd.y - touchStart.y;
-            const threshold = 50;
-            
-            if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    handleMove(dx > 0 ? 'right' : 'left');
-                } else {
-                    handleMove(dy > 0 ? 'down' : 'up');
-                }
-            }
-            
-            touchStart = null;
-        });
-
-        // Keyboard controls
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'ArrowUp': case 'w': case 'W': handleMove('up'); break;
-                case 'ArrowDown': case 's': case 'S': handleMove('down'); break;
-                case 'ArrowLeft': case 'a': case 'A': handleMove('left'); break;
-                case 'ArrowRight': case 'd': case 'D': handleMove('right'); break;
-                case ' ': attackAction(); break;
-                case 'e': case 'E': useItem(); break;
-            }
-        });
-
-        function handleMove(direction) {
-            const now = Date.now();
-            if (now - gameState.lastMoveTime < 200) return; // Throttle movement
-            gameState.lastMoveTime = now;
-            
-            switch(direction) {
-                case 'up': movePlayer(0, -1); break;
-                case 'down': movePlayer(0, 1); break;
-                case 'left': movePlayer(-1, 0); break;
-                case 'right': movePlayer(1, 0); break;
-            }
-        }
-
-        // Action functions
-        function attackAction() {
-            const nearbyMonster = gameState.monsters.find(m => 
-                Math.abs(m.x - gameState.player.x) <= 1 && 
-                Math.abs(m.y - gameState.player.y) <= 1
-            );
-            
-            if (nearbyMonster) {
-                nearbyMonster.hp -= 20;
-                showMessage('モンスターを攻撃！ -20 HP');
-                speak('攻撃しました！');
-                
-                if (nearbyMonster.hp <= 0) {
-                    const index = gameState.monsters.indexOf(nearbyMonster);
-                    gameState.monsters.splice(index, 1);
-                    gameState.player.score += 50;
-                    showMessage('モンスターを倒しました！ +50ポイント');
-                    speak('モンスターを倒しました！');
-                }
-                
-                updateUI();
-                render();
-            } else {
-                showMessage('攻撃する敵がいません');
-                speak('攻撃する敵がいません');
-            }
-            
-            if (navigator.vibrate) navigator.vibrate(100);
-        }
-
-        function useItem() {
-            if (gameState.player.items > 0) {
-                gameState.player.items--;
-                gameState.player.hp = Math.min(100, gameState.player.hp + 20);
-                showMessage('アイテムを使用しました！ +20 HP');
-                speak('回復しました！');
-                updateUI();
-            } else {
-                showMessage('アイテムがありません');
-                speak('アイテムがありません');
-            }
-        }
-
-        function toggleMenu() {
-            showMessage('メニュー: セーブされました');
-            speak('ゲームをセーブしました');
-            localStorage.setItem('makiGameSave', JSON.stringify(gameState));
-        }
-
-        // Character actions
-        function performAction(action) {
-            const actions = {
-                good: 'まきちゃんはいい子になりました！みんなに優しくしています。',
-                bad: 'まきちゃんはちょっといたずらをしています。でも可愛いからゆるしちゃいます！',
-                help: 'まきちゃんはお手伝いをしています。とても頼りになる子ですね！',
-                clean: 'まきちゃんはお片付けをしています。お部屋がきれいになりました！',
-                video: 'まきちゃんはYouTubeを見ています。楽しい動画を見つけたみたい！',
-                snack: 'まきちゃんはおやつタイムです。美味しそうに食べていますね！',
-                sleep: 'まきちゃんはお昼寝中です。すやすや気持ちよさそう。',
-                walk: 'まきちゃんはお散歩に出かけました。元気いっぱいです！'
-            };
-            
-            const message = actions[action] || 'まきちゃんは何かをしています！';
-            showMessage(message);
-            speak(message);
-            
-            if (navigator.vibrate) navigator.vibrate(150);
-        }
-
-        // UI functions
-        function showMessage(text) {
-            const messageArea = document.getElementById('messageArea');
-            messageArea.textContent = text;
-            messageArea.classList.add('show');
-            
-            setTimeout(() => {
-                messageArea.classList.remove('show');
-            }, 3000);
-        }
-
+        // 音声合成（対応デバイスのみ）
         function speak(text) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ja-JP';
-                utterance.rate = 0.9;
-                utterance.pitch = 1.2;
-                speechSynthesis.speak(utterance);
+            try {
+                if ('speechSynthesis' in window) {
+                    var utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = 1;
+                    utterance.pitch = 1.2;
+                    speechSynthesis.speak(utterance);
+                }
+            } catch (e) {
+                console.log('音声合成に対応していません');
             }
         }
 
-        function updateUI() {
-            document.getElementById('hp').textContent = gameState.player.hp;
-            document.getElementById('level').textContent = gameState.player.level;
-            document.getElementById('score').textContent = gameState.player.score;
-            document.getElementById('items').textContent = gameState.player.items;
+        // メッセージ表示
+        function showMessage(text) {
+            document.getElementById('message').textContent = text;
+            speak(text);
         }
 
-        // Initialize game
-        function initGame() {
-            resizeCanvas();
-            generateMaze();
-            updateUI();
-            render();
+        // 迷路生成
+        function generateMaze() {
+            var maze = [];
+            var size = gameState.mazeSize;
             
-            // Load saved game if exists
-            const saved = localStorage.getItem('makiGameSave');
-            if (saved) {
-                try {
-                    gameState = Object.assign(gameState, JSON.parse(saved));
-                    updateUI();
-                    render();
-                } catch (e) {
-                    console.log('Failed to load save');
+            // 初期化（全て壁）
+            for (var i = 0; i < size; i++) {
+                maze[i] = [];
+                for (var j = 0; j < size; j++) {
+                    maze[i][j] = 'wall';
+                }
+            }
+
+            // シンプルな迷路パターン
+            for (var i = 1; i < size - 1; i += 2) {
+                for (var j = 1; j < size - 1; j += 2) {
+                    maze[i][j] = 'floor';
+                    
+                    // ランダムに道を作る
+                    if (Math.random() > 0.5 && j + 2 < size - 1) {
+                        maze[i][j + 1] = 'floor';
+                    }
+                    if (Math.random() > 0.5 && i + 2 < size - 1) {
+                        maze[i + 1][j] = 'floor';
+                    }
+                }
+            }
+
+            // スタート地点
+            maze[1][1] = 'floor';
+            
+            // ゴール
+            maze[size - 2][size - 2] = 'goal';
+            
+            // アイテムとモンスターを配置
+            var itemCount = 0;
+            var monsterCount = 0;
+            
+            for (var i = 2; i < size - 2; i++) {
+                for (var j = 2; j < size - 2; j++) {
+                    if (maze[i][j] === 'floor') {
+                        var rand = Math.random();
+                        if (rand < 0.1 && itemCount < 5) {
+                            maze[i][j] = 'treasure';
+                            itemCount++;
+                        } else if (rand < 0.15 && monsterCount < 3) {
+                            maze[i][j] = 'monster';
+                            monsterCount++;
+                        }
+                    }
+                }
+            }
+
+            return maze;
+        }
+
+        // 迷路描画
+        function drawMaze() {
+            var mazeElement = document.getElementById('maze');
+            mazeElement.innerHTML = '';
+            
+            for (var i = 0; i < gameState.mazeSize; i++) {
+                for (var j = 0; j < gameState.mazeSize; j++) {
+                    var cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    if (i === gameState.player.y && j === gameState.player.x) {
+                        cell.className += ' player';
+                        cell.textContent = '🌸';
+                    } else {
+                        var cellType = gameState.maze[i][j];
+                        cell.className += ' ' + cellType;
+                        
+                        switch (cellType) {
+                            case 'wall': cell.textContent = '■'; break;
+                            case 'floor': cell.textContent = '　'; break;
+                            case 'treasure': cell.textContent = '💎'; break;
+                            case 'monster': cell.textContent = '👹'; break;
+                            case 'goal': cell.textContent = '🏆'; break;
+                        }
+                    }
+                    
+                    mazeElement.appendChild(cell);
+                }
+            }
+        }
+
+        // ステータス更新
+        function updateStats() {
+            document.getElementById('hp').textContent = gameState.hp;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('items').textContent = gameState.items;
+        }
+
+        // 移動処理
+        function move(direction) {
+            var newX = gameState.player.x;
+            var newY = gameState.player.y;
+            
+            switch (direction) {
+                case 'up': newY--; break;
+                case 'down': newY++; break;
+                case 'left': newX--; break;
+                case 'right': newX++; break;
+            }
+            
+            // 境界チェック
+            if (newX < 0 || newX >= gameState.mazeSize || 
+                newY < 0 || newY >= gameState.mazeSize) {
+                showMessage('そっちには進めません！');
+                return;
+            }
+            
+            // 壁チェック
+            if (gameState.maze[newY][newX] === 'wall') {
+                showMessage('壁にぶつかりました！');
+                return;
+            }
+            
+            // 移動実行
+            gameState.player.x = newX;
+            gameState.player.y = newY;
+            
+            // イベント処理
+            var cellType = gameState.maze[newY][newX];
+            switch (cellType) {
+                case 'treasure':
+                    showMessage('宝箱を発見しました！アイテムをゲット！');
+                    gameState.items++;
+                    gameState.score += 100;
+                    gameState.maze[newY][newX] = 'floor';
+                    break;
+                    
+                case 'monster':
+                    showMessage('モンスターとの戦闘！');
+                    var damage = Math.floor(Math.random() * 20) + 10;
+                    gameState.hp -= damage;
+                    gameState.score += 50;
+                    gameState.maze[newY][newX] = 'floor';
+                    
+                    if (gameState.hp <= 0) {
+                        showMessage('ゲームオーバー！');
+                        resetGame();
+                        return;
+                    }
+                    break;
+                    
+                case 'goal':
+                    showMessage('ゴール到達！おめでとうございます！');
+                    gameState.score += 500;
+                    gameState.level++;
+                    newMaze();
+                    return;
+                    
+                default:
+                    showMessage('まきちゃんが移動しました');
+                    break;
+            }
+            
+            drawMaze();
+            updateStats();
+        }
+
+        // アクション
+        function action() {
+            showMessage('まきちゃんが周りを調べています...');
+            
+            // 周りのアイテムをチェック
+            var found = false;
+            for (var dy = -1; dy <= 1; dy++) {
+                for (var dx = -1; dx <= 1; dx++) {
+                    var checkX = gameState.player.x + dx;
+                    var checkY = gameState.player.y + dy;
+                    
+                    if (checkX >= 0 && checkX < gameState.mazeSize && 
+                        checkY >= 0 && checkY < gameState.mazeSize) {
+                        if (gameState.maze[checkY][checkX] === 'treasure') {
+                            showMessage('近くに宝箱があります！');
+                            found = true;
+                        } else if (gameState.maze[checkY][checkX] === 'goal') {
+                            showMessage('ゴールが近くにあります！');
+                            found = true;
+                        }
+                    }
                 }
             }
             
-            showMessage('まきちゃんの冒険が始まりました！');
-            speak('まきちゃんの冒険が始まりました！迷路を探索しましょう！');
+            if (!found) {
+                showMessage('何も見つかりませんでした...');
+            }
         }
 
-        // Event listeners
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('load', initGame);
+        // まきちゃんアクション
+        function makiAction(type) {
+            var messages = {
+                'good': 'まきちゃんがいい子になりました！お利口さんですね〜',
+                'bad': 'まきちゃんがちょっといたずらしちゃいました！でも可愛いから許しちゃう〜',
+                'help': 'まきちゃんがお手伝いしてくれます！とても助かります〜',
+                'clean': 'まきちゃんがお片付けしています！きれい好きですね〜',
+                'video': 'まきちゃんが動画を見ています！楽しそうですね〜',
+                'snack': 'まきちゃんがおやつを食べています！美味しそう〜',
+                'sleep': 'まきちゃんがお昼寝中です...すやすや〜',
+                'walk': 'まきちゃんがお散歩に行きました！元気いっぱいですね〜'
+            };
+            
+            showMessage(messages[type] || 'まきちゃんが何かしています〜');
+            
+            // 小さなボーナス
+            gameState.score += 10;
+            updateStats();
+        }
 
-        // Prevent default touch behaviors
-        document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-        }, { passive: false });
+        // 新しい迷路
+        function newMaze() {
+            gameState.maze = generateMaze();
+            gameState.player.x = 1;
+            gameState.player.y = 1;
+            drawMaze();
+            showMessage('新しい迷路が生成されました！');
+        }
 
-        // PWA installation
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            deferredPrompt = e;
+        // ゲームリセット
+        function resetGame() {
+            gameState.hp = 100;
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.items = 0;
+            newMaze();
+            updateStats();
+            showMessage('ゲームをリセットしました！');
+        }
+
+        // キーボード操作（PC用）
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    e.preventDefault();
+                    move('up');
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    move('down');
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    e.preventDefault();
+                    move('left');
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    e.preventDefault();
+                    move('right');
+                    break;
+                case ' ':
+                case 'Enter':
+                    e.preventDefault();
+                    action();
+                    break;
+            }
         });
+
+        // タッチイベント（モバイル用）
+        if (isTouch) {
+            var touchStartX = 0;
+            var touchStartY = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            document.addEventListener('touchend', function(e) {
+                if (!touchStartX || !touchStartY) return;
+                
+                var touchEndX = e.changedTouches[0].clientX;
+                var touchEndY = e.changedTouches[0].clientY;
+                
+                var diffX = touchStartX - touchEndX;
+                var diffY = touchStartY - touchEndY;
+                
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (diffX > 50) move('left');
+                    else if (diffX < -50) move('right');
+                } else {
+                    if (diffY > 50) move('up');
+                    else if (diffY < -50) move('down');
+                }
+                
+                touchStartX = 0;
+                touchStartY = 0;
+            }, { passive: true });
+        }
+
+        // ゲーム初期化
+        window.onload = function() {
+            try {
+                gameState.maze = generateMaze();
+                drawMaze();
+                updateStats();
+                showMessage('まきちゃんの冒険へようこそ！🌸');
+            } catch (e) {
+                console.log('初期化エラー:', e);
+                document.getElementById('message').textContent = 'ゲームを読み込み中...';
+            }
+        };
+
+        // 画面回転対応
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                drawMaze();
+            }, 100);
+        });
+
+        // 古いブラウザ対応
+        if (!Array.prototype.forEach) {
+            Array.prototype.forEach = function(callback) {
+                for (var i = 0; i < this.length; i++) {
+                    callback(this[i], i, this);
+                }
+            };
+        }
     </script>
 </body>
 </html>
+
 
